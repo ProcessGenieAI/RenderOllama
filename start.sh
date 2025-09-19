@@ -7,7 +7,6 @@ API_URL="http://127.0.0.1:11434"
 
 mkdir -p "$OLLAMA_MODELS"
 export OLLAMA_MODELS OLLAMA_HOST
-startTimeout: 500  # increase to 5 minutes (seconds)
 
 echo "Starting ollama serve..."
 ollama serve &          # Start the server in the background
@@ -25,7 +24,7 @@ echo "Waiting for Ollama API to be available..."
 count=0
 until curl --silent --fail "${API_URL}/api/tags" >/dev/null 2>&1; do
   count=$((count+1))
-  if [ "$count" -gt 120 ]; then
+  if [ "$count" -gt 120 ]; then  # Fixed 120 second timeout
     echo "ERROR: timeout waiting for Ollama API (after 120s)"
     cleanup
   fi
