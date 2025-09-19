@@ -1,4 +1,4 @@
-FROM ghcr.io/ollama/ollama:latest
+FROM ollama/ollama:latest
 
 # use an explicit dir for models in the container's filesystem (ephemeral on Free)
 ENV OLLAMA_MODELS=/ollama/models
