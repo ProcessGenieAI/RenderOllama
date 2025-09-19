@@ -1,0 +1,7 @@
+- type: pserv
+  name: your-app-ollama
+  region: oregon
+  runtime: docker
+  dockerContext: ./ollama
+  dockerfilePath: ./ollama/Dockerfile
+  plan: starter
