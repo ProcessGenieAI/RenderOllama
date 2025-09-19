@@ -7,6 +7,7 @@ API_URL="http://127.0.0.1:11434"
 
 mkdir -p "$OLLAMA_MODELS"
 export OLLAMA_MODELS OLLAMA_HOST
+startTimeout: 500  # increase to 5 minutes (seconds)
 
 echo "Starting ollama serve..."
 ollama serve &          # Start the server in the background
