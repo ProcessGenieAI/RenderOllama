@@ -1,39 +1,51 @@
 #!/bin/sh
-set -e
+set -eu
 
-# env defaults
 OLLAMA_MODELS=${OLLAMA_MODELS:-/ollama/models}
 OLLAMA_HOST=${OLLAMA_HOST:-0.0.0.0:11434}
 API_URL="http://127.0.0.1:11434"
 
 mkdir -p "$OLLAMA_MODELS"
-export OLLAMA_MODELS
-export OLLAMA_HOST
+export OLLAMA_MODELS OLLAMA_HOST
 
-# Start ollama server in background
-ollama serve &
+echo "Starting ollama serve..."
+ollama serve &          # background the server so we can pull models
+child_pid=$!
 
-# wait for the server to become healthy
-echo "Waiting for Ollama API to become available..."
+# ensure we kill child when container is stopped
+cleanup() {
+  echo "Caught signal: stopping ollama (pid $child_pid)..."
+  kill "$child_pid" 2>/dev/null || true
+  wait "$child_pid" 2>/dev/null || true
+  exit 0
+}
+trap cleanup INT TERM
+
+# wait for API to be responsive (timeout after 120s)
+echo "Waiting for Ollama API to be available..."
+count=0
 until curl --silent --fail "${API_URL}/api/tags" >/dev/null 2>&1; do
+  count=$((count+1))
+  if [ "$count" -gt 120 ]; then
+    echo "ERROR: timeout waiting for Ollama API (after 120s)"
+    # ensure child stays cleaned up so container exits with an informative state
+    cleanup
+  fi
   sleep 1
 done
 echo "Ollama API is up."
 
-# Pull needed model(s) if not present.
-# Replace gemma:2b / nomic-embed-text with the model(s) you want.
+# Pull only what we need (adjust model names as desired)
 if ! ollama list | grep -q "gemma:2b"; then
-  echo "Pulling gemma:2b (this can take a while)..."
-  ollama pull gemma:2b
+  echo "Pulling gemma:2b..."
+  ollama pull gemma:2b || { echo "ERROR: ollama pull gemma:2b failed"; cleanup; }
 fi
+
 if ! ollama list | grep -q "nomic-embed-text"; then
-  echo "Pulling nomic-embed-text (for embeddings)..."
-  ollama pull nomic-embed-text
+  echo "Pulling nomic-embed-text..."
+  ollama pull nomic-embed-text || { echo "ERROR: ollama pull nomic-embed-text failed"; cleanup; }
 fi
 
-# (Optional) verify tags
-ollama list
-echo "Startup complete — keeping Ollama process in foreground."
-
-# Wait on foreground process (ollama serve was backgrounded; run tail to keep container alive)
-wait -n
+echo "Models pulled. Now handing control to ollama serve (pid $child_pid)."
+# Wait on the server process so container stays alive while it's running
+wait "$child_pid"
