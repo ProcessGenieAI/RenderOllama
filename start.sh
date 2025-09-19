@@ -3,7 +3,7 @@ set -eu
 
 OLLAMA_MODELS=${OLLAMA_MODELS:-/ollama/models}
 OLLAMA_HOST=${OLLAMA_HOST:-0.0.0.0:11434}
-API_URL="http://127.0.0.1:11434"
+API_URL="http://0.0.0.0:11434"  # Changed from 127.0.0.1 to 0.0.0.0
 
 mkdir -p "$OLLAMA_MODELS"
 export OLLAMA_MODELS OLLAMA_HOST
@@ -24,7 +24,7 @@ echo "Waiting for Ollama API to be available..."
 count=0
 until curl --silent --fail "${API_URL}/api/tags" >/dev/null 2>&1; do
   count=$((count+1))
-  if [ "$count" -gt 120 ]; then  # Fixed 120 second timeout
+  if [ "$count" -gt 120 ]; then
     echo "ERROR: timeout waiting for Ollama API (after 120s)"
     cleanup
   fi
