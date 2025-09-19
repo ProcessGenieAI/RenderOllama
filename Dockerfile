@@ -9,5 +9,4 @@ RUN chmod +x /start.sh
 
 EXPOSE 11434
 
-# Run the script with /bin/sh as PID 1 so it *executes*, not passed as args to ollama
 ENTRYPOINT ["/bin/sh", "/start.sh"]
